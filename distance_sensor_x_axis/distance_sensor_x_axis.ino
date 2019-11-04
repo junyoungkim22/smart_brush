@@ -61,6 +61,8 @@ void loop() {
   //Serial.println(distancey*10);
   delay(MEASURE_SAMPLE_DELAY);
   //Serial.println(measure(trigPin1, echoPin1));
+  Serial.print(300);
+  Serial.print("\t");
   Serial.println(singleMeasurement(trigPin1, echoPin1));
 }
 
@@ -88,7 +90,7 @@ float measure(int trigPin, int echoPin){
 
 float singleMeasurement(int trigPin, int echoPin){
   float time_taken = sensor.ping();
-  return time_taken / 57.0;
+  return int(time_taken / 57.0 * 10);
   //Serial.println(sensor.convert_mm(time_taken));
   /*
   long duration = 0;

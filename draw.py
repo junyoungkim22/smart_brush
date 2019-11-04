@@ -8,8 +8,8 @@ from PIL import Image
 import io, os
 import serial
 
-comPort = 'COM3'
-comPortBaud = 115200
+comPort = 'COM8'
+comPortBaud = 9600
 
 class App:
 
@@ -19,8 +19,9 @@ class App:
         self.height = 500
         self.x, self.y = 0, 0
         self.first = True
+        self.startx, self.starty = self.width / 2, self.height / 2
         self.lastx, self.lasty = 0, 0
-        self.corx, self.cory = self.width / 2, self.height / 2
+        self.initx, self.inity = 0, 0
         self.ser = serial.Serial()
 
         # set main window's title
@@ -56,7 +57,7 @@ class App:
         self.canvas.grid(row=1)
 
         ## start attempts to read from serial port
-        self.read_loop()
+        #self.read_loop()
 
     def __del__(self):
         self.stop_read_loop()
@@ -72,6 +73,7 @@ class App:
         try:
             self.ser = serial.Serial(port=self.comPortStr.get(),baudrate=comPortBaud, timeout=1)
             print("serial port '" + self.comPortStr.get() + "' opened!")
+            self.calibrate()
         except:
             print("failed to open serial port '" + self.comPortStr.get() + "'")
 
@@ -97,18 +99,17 @@ class App:
                 disx = int(float(pos[0]))
                 disy = int(float(pos[1]))
 
-                '''
                 print(disx)
                 print(self.x)
                 print(disy)
                 print(self.y)
+
+                if(disx == 0):
+                    break
+                if(disy == 0):
+                    break
+
                 '''
-
-                if(disx > 20000):
-                    break
-                if(disy > 20000):
-                    break
-
                 if(self.first):
                     if(disx < 200):
                         break
@@ -120,8 +121,15 @@ class App:
                     self.lasty = self.y
                     self.first = False
                     break
-                diffx = disx - self.x
-                diffy = disy - self.y
+                '''
+                corx = disx - self.initx
+                cory = disy - self.inity
+                diffx = corx - self.lastx
+                diffy = cory - self.lasty
+                '''
+                print(corx)
+                print(cory)
+                '''
                 '''
                 print("***")
                 print(diffx)
@@ -140,17 +148,31 @@ class App:
                 #print("No BREAK")
                 diffy = diffy * (-1)
 
-                self.lastx = self.x
+                '''
+                self.lastx = corx
                 self.lasty = self.y
                 self.x = disx
                 self.y = disy
+                '''
+                drawx = self.startx + corx
+                drawy = self.starty + cory
+                '''
+                print("DRAW")
+                print(drawx)
+                print(drawy)
+                '''
 
                 #self.canvas.create_oval(self.corx, self.cory, self.corx + diffx, self.cory + diffy, width=30)
-                self.canvas.create_oval(self.corx, self.cory, self.corx + diffx, self.cory, width=25, fill='#fb0')
+                self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 10, width=25, fill='#fb0')
                 self.canvas.update()
 
+                self.lastx = corx
+                self.lasty = cory
+
+                '''
                 self.corx = self.corx + diffx
                 self.cory = self.cory + diffy
+                '''
 
                 #self.lastx = self.x
                 #self.x = int(float(pos[0]*10))
@@ -163,6 +185,48 @@ class App:
             pass
             #print("failed to cancel timer")
             # do nothing
+
+    def calibrate(self):
+        calibrated = False
+        print("Calibrating...")
+        if( self.ser.isOpen() ):
+            while( calibrated is False ):
+
+                line = self.ser.readline().decode().rstrip()
+
+                pos = line.split('\t')
+                disx = int(float(pos[0]))
+                disy = int(float(pos[1]))
+
+                '''
+                print(disx)
+                print(self.x)
+                print(disy)
+                print(self.y)
+                '''
+
+                if(disx == 0):
+                    continue
+                if(disy == 0):
+                    continue
+
+                for i in range(5):
+                    line = self.ser.readline().decode().rstrip()
+                    pos = line.split('\t')
+                    new_disx = int(float(pos[0]))
+                    new_disy = int(float(pos[1]))
+                    if(abs(new_disx - disx) > 0.5):
+                        continue
+                    if(abs(new_disy - disy) > 0.5):
+                        continue
+                    if i == 4:
+                        calibrated = True
+                        self.initx = disx
+                        self.inity = disy
+                        print(self.initx)
+                        print(self.inity)
+            print("Done Calibrating!")
+            self.read_loop()
 
     def display_image(self):
         img = Image.open("images/giuk.PNG")
