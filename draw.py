@@ -8,7 +8,7 @@ from PIL import Image
 import io, os
 import serial
 
-comPort = 'COM8'
+comPort = 'COM4'
 comPortBaud = 9600
 
 class App:
@@ -98,15 +98,20 @@ class App:
                 pos = line.split('\t')
                 disx = int(float(pos[0]))
                 disy = int(float(pos[1]))
+                disz = int(float(pos[2]))
 
+                '''
                 print(disx)
                 print(self.x)
                 print(disy)
                 print(self.y)
+                '''
 
                 if(disx == 0):
                     break
                 if(disy == 0):
+                    break
+                if(disz == 0):
                     break
 
                 '''
@@ -163,8 +168,9 @@ class App:
                 '''
 
                 #self.canvas.create_oval(self.corx, self.cory, self.corx + diffx, self.cory + diffy, width=30)
-                self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 10, width=25, fill='#fb0')
-                self.canvas.update()
+                if(disz < 250):
+                    self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 10, width=15, fill='#fb0')
+                    self.canvas.update()
 
                 self.lastx = corx
                 self.lasty = cory
@@ -189,14 +195,54 @@ class App:
     def calibrate(self):
         calibrated = False
         print("Calibrating...")
+        times = 0
+        disx = 1000
+        disy = 1000
         if( self.ser.isOpen() ):
+            #while( calibrated is False ):
+            #while(self.ser.inWaiting() > 0):
             while( calibrated is False ):
+                line = self.ser.readline().decode().rstrip()
+                pos = line.split('\t')
+                print(disx)
+                print(disy)
+                if(times == 0):
+                    disx = int(float(pos[0]))
+                    disy = int(float(pos[1]))
+                    times += 1
+                    print("init")
+                    continue
+
+                new_disx = int(float(pos[0]))
+                new_disy = int(float(pos[1]))
+                if(abs(new_disx - disx) > 100):
+                    print("XXX")
+                    times = 0
+                    continue
+                if(abs(new_disy - disy) > 0.5):
+                    print("YYY")
+                    times = 0
+                    continue
+                print("go")
+                times += 1
+
+                if(times == 5):
+                    calibrated = True
+                    self.initx = disx
+                    self.inity = disy
+                    print(self.initx)
+                    print(self.inity)
+                    break
+
+                '''
 
                 line = self.ser.readline().decode().rstrip()
+                print("cal loop")
 
                 pos = line.split('\t')
                 disx = int(float(pos[0]))
                 disy = int(float(pos[1]))
+                '''
 
                 '''
                 print(disx)
@@ -204,7 +250,7 @@ class App:
                 print(disy)
                 print(self.y)
                 '''
-
+                '''
                 if(disx == 0):
                     continue
                 if(disy == 0):
@@ -225,6 +271,7 @@ class App:
                         self.inity = disy
                         print(self.initx)
                         print(self.inity)
+                '''
             print("Done Calibrating!")
             self.read_loop()
 

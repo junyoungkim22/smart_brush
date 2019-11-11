@@ -9,7 +9,7 @@ const int echoPin1 = 3;
 const int trigPin2 = 4;
 const int echoPin2 = 5;
 
-const int MEASURE_SAMPLES = 5;
+const int MEASURE_SAMPLES = 10;
 const int MEASURE_SAMPLE_DELAY = 10;
 /*
 #define trigPin1 2
@@ -63,7 +63,8 @@ void loop() {
   //Serial.println(measure(trigPin1, echoPin1));
   Serial.print(300);
   Serial.print("\t");
-  Serial.println(singleMeasurement(trigPin1, echoPin1));
+  //Serial.println(singleMeasurement(trigPin1, echoPin1));
+  Serial.println(measure(trigPin1, echoPin1));
 }
 
 float measure(int trigPin, int echoPin){
