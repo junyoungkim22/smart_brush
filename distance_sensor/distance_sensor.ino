@@ -14,7 +14,7 @@ const int echoPin3 = 7;
 
 
 const int MEASURE_SAMPLES = 10;
-const int MEASURE_SAMPLE_DELAY = 20;
+const int MEASURE_SAMPLE_DELAY = 5;
 /*
 #define trigPin1 2
 #define echoPin1 3

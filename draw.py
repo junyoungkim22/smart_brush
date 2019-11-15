@@ -19,10 +19,11 @@ class App:
         self.height = 500
         self.x, self.y = 0, 0
         self.first = True
-        self.startx, self.starty = self.width / 2, self.height / 2
+        self.startx, self.starty = self.width / 4, self.height / 4
         self.lastx, self.lasty = 0, 0
         self.initx, self.inity = 0, 0
         self.ser = serial.Serial()
+        self.sensitivity = 3
 
         # set main window's title
         master.title("Draw")
@@ -141,14 +142,17 @@ class App:
                 print(diffy)
                 print("---")
                 '''
+                print(corx)
+                print(cory)
 
                 #ignore erratic output from sensor
                 #if(abs(diffx) > 30 or abs(diffx) < 2):
+                
                 if(abs(diffx) > 30):
                     break
-                #if(abs(diffy) > 30 or abs(diffy) < 2):
                 if(abs(diffy) > 30):
                     break
+                
 
                 #print("No BREAK")
                 diffy = diffy * (-1)
@@ -159,8 +163,8 @@ class App:
                 self.x = disx
                 self.y = disy
                 '''
-                drawx = self.startx + corx
-                drawy = self.starty + cory
+                drawx = self.startx + (corx*self.sensitivity)
+                drawy = self.starty + (cory*self.sensitivity)
                 '''
                 print("DRAW")
                 print(drawx)
@@ -168,7 +172,7 @@ class App:
                 '''
 
                 #self.canvas.create_oval(self.corx, self.cory, self.corx + diffx, self.cory + diffy, width=30)
-                if(disz < 250):
+                if(disz < 150):
                     self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 10, width=15, fill='#fb0')
                     self.canvas.update()
 
@@ -209,12 +213,16 @@ class App:
                 if(times == 0):
                     disx = int(float(pos[0]))
                     disy = int(float(pos[1]))
+                    if(disx == 0 or disy == 0):
+                        continue
                     times += 1
                     print("init")
                     continue
 
                 new_disx = int(float(pos[0]))
                 new_disy = int(float(pos[1]))
+                if(new_disx == 0 or new_disy == 0):
+                    continue
                 if(abs(new_disx - disx) > 100):
                     print("XXX")
                     times = 0
@@ -276,17 +284,17 @@ class App:
             self.read_loop()
 
     def display_image(self):
-        img = Image.open("images/giuk.PNG")
+        img = Image.open("images/gul.PNG")
         img = img.resize((self.width, self.height), Image.ANTIALIAS)
         p = img.getdata()
         black_thresh = 500
-        for x in range(0, self.width - 2):
-            for y in range(0, self.height - 1):
-                pixel = p[x * self.width + y]
+        for y in range(0, self.height - 1):
+            for x in range(0, self.width - 1):
+                pixel = p[y * self.width + x]
                 if(sum(pixel) < black_thresh):
                     pass
                     #self.canvas.create_rectangle(self.width - x, self.height - y, self.width - x + 20, self.height - y + 20, outline='#fb0', fill='#00f')
-                    self.display_pixel(self.width - x, self.height - y, 0)
+                    self.display_pixel(x, y, 0)
                 else:
                     pass
                     #self.display_pixel(self.width - x, self.height - y, 200)
