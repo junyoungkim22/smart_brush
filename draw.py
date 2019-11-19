@@ -7,6 +7,7 @@ from threading import Timer
 from PIL import Image
 import io, os
 import serial
+import numpy
 
 comPort = 'COM4'
 comPortBaud = 9600
@@ -15,8 +16,8 @@ class App:
 
     def __init__(self, master):
 
-        self.width = 500
-        self.height = 500
+        self.width = 800
+        self.height = 800
         self.x, self.y = 0, 0
         self.first = True
         self.startx, self.starty = self.width / 4, self.height / 4
@@ -24,6 +25,10 @@ class App:
         self.initx, self.inity = 0, 0
         self.ser = serial.Serial()
         self.sensitivity = 3
+
+        self.x_list = []
+        self.y_list = []
+        self.smooth = False
 
         # set main window's title
         master.title("Draw")
@@ -90,6 +95,17 @@ class App:
         self.t = Timer(0.0,self.read_loop)
         self.t.start()
 
+    def smoothListTriangle(self, y_list, strippedXs=False, degree=5):
+        weight = []
+        window = degree*2 - 1
+        smoothed = [0.0]*(len(y_list) - window)
+        for x in range(1, 2*degree):
+            weight.append(degree-abs(degree - x))
+        w = numpy.array(weight)
+        for i in range(len(smoothed)):
+            smoothed[i] = sum(numpy.array(y_list[i:i+window] * w)/float(sum(w)))
+        return smoothed
+
     def read_from_serial(self):
         if( self.ser.isOpen() ):
             while( self.ser.inWaiting() > 0 ):
@@ -107,6 +123,8 @@ class App:
                 print(disy)
                 print(self.y)
                 '''
+
+                #print(str(disx) + '\t' + str(disy) + '\t' + str(disz))  
 
                 if(disx == 0):
                     break
@@ -142,8 +160,6 @@ class App:
                 print(diffy)
                 print("---")
                 '''
-                print(corx)
-                print(cory)
 
                 #ignore erratic output from sensor
                 #if(abs(diffx) > 30 or abs(diffx) < 2):
@@ -173,8 +189,26 @@ class App:
 
                 #self.canvas.create_oval(self.corx, self.cory, self.corx + diffx, self.cory + diffy, width=30)
                 if(disz < 150):
+                    self.smooth = True
+                    self.x_list.append(drawx)
+                    self.y_list.append(drawy)
+                    self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 10, width=1, fill='#0000ff')
+                    '''
                     self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 10, width=15, fill='#fb0')
                     self.canvas.update()
+                    '''
+                if(disy > 200):
+                    if self.smooth:
+                        print("smooth")
+                        print(len(self.y_list))
+                        if (len(self.y_list) > 1):
+                            print("smooth draw")
+                            self.y_list = self.smoothListTriangle(self.y_list)
+                            for drawx, drawy in zip(self.x_list, self.y_list):
+                                self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 1, width=15, fill='#ffffff')
+                        self.smooth = False
+                        self.x_list = []
+                        self.y_list = []
 
                 self.lastx = corx
                 self.lasty = cory
@@ -227,7 +261,7 @@ class App:
                     print("XXX")
                     times = 0
                     continue
-                if(abs(new_disy - disy) > 0.5):
+                if(abs(new_disy - disy) > 100):
                     print("YYY")
                     times = 0
                     continue
