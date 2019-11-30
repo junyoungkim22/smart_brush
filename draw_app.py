@@ -22,25 +22,19 @@ class DrawWidget(Widget):
 	def on_touch_move(self, touch):
 		touch.ud['line'].points += [touch.x, touch.y]
 
-class UserScreen(GridLayout):
-	def __init__(self, **kwargs):
-	    super(UserScreen, self).__init__(**kwargs)
-	    self.cols = 2
-	    self.add_widget(Label(text='User Name'))
-	    self.username = TextInput(multiline=False)
-	    self.add_widget(self.username)
-	    self.add_widget(Label(text='password'))
-	    self.password = TextInput(password=True, multiline=False)
-	    self.add_widget(self.password)
-	    self.draw_screen = DrawWidget()
-	    self.add_widget(self.draw_screen)
-
-
 
 class MyDrawApp(App):
 	def build(self):
-		return UserScreen();
-		#return DrawWidget()
+		parent = Widget()
+		self.painter = DrawWidget()
+		clear_btn = Button(text='Clear')
+		clear_btn.bind(on_release=self.clear_canvas)
+		parent.add_widget(self.painter)
+		parent.add_widget(clear_btn)
+		return parent
+
+	def clear_canvas(self, obj):
+		self.painter.canvas.clear()
 
 if __name__ == '__main__':
 	MyDrawApp().run()
