@@ -25,9 +25,11 @@ class App:
         self.initx, self.inity = 0, 0
         self.ser = serial.Serial()
         self.sensitivity = 3
+        self.past_dz = 150
 
         self.x_list = []
         self.y_list = []
+        self.thick_list = []
         self.smooth = False
 
         # set main window's title
@@ -95,15 +97,15 @@ class App:
         self.t = Timer(0.0,self.read_loop)
         self.t.start()
 
-    def smoothListTriangle(self, y_list, strippedXs=False, degree=5):
+    def smoothListTriangle(self, cord_list, strippedXs=False, degree=3):
         weight = []
         window = degree*2 - 1
-        smoothed = [0.0]*(len(y_list) - window)
+        smoothed = [0.0]*(len(cord_list) - window)
         for x in range(1, 2*degree):
             weight.append(degree-abs(degree - x))
         w = numpy.array(weight)
         for i in range(len(smoothed)):
-            smoothed[i] = sum(numpy.array(y_list[i:i+window] * w)/float(sum(w)))
+            smoothed[i] = sum(numpy.array(cord_list[i:i+window] * w)/float(sum(w)))
         return smoothed
 
     def read_from_serial(self):
@@ -132,6 +134,8 @@ class App:
                     break
                 if(disz == 0):
                     break
+                    #disz = self.past_dz
+                    #break
 
                 '''
                 if(self.first):
@@ -186,26 +190,30 @@ class App:
                 print(drawx)
                 print(drawy)
                 '''
-
+                print(disz)
                 #self.canvas.create_oval(self.corx, self.cory, self.corx + diffx, self.cory + diffy, width=30)
                 if(disz < 150):
                     self.smooth = True
                     self.x_list.append(drawx)
                     self.y_list.append(drawy)
+                    #self.past_dz = disz
+                    self.thick_list.append(max(50 - (disz - 100), 10))
                     self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 10, width=1, fill='#0000ff')
                     '''
                     self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 10, width=15, fill='#fb0')
                     self.canvas.update()
                     '''
-                if(disy > 200):
+                if(disz > 200):
                     if self.smooth:
                         print("smooth")
                         print(len(self.y_list))
                         if (len(self.y_list) > 1):
                             print("smooth draw")
+                            self.x_list = self.smoothListTriangle(self.x_list)
                             self.y_list = self.smoothListTriangle(self.y_list)
-                            for drawx, drawy in zip(self.x_list, self.y_list):
-                                self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 1, width=15, fill='#ffffff')
+                            for drawx, drawy, thickness in zip(self.x_list, self.y_list, self.thick_list):
+                                self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 1, width=thickness, fill='#ffffff')
+                                #self.canvas.create_oval(drawx, drawy, drawx + 10, drawy + 1, width=20, fill='#ffffff')
                         self.smooth = False
                         self.x_list = []
                         self.y_list = []

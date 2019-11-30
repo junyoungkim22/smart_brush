@@ -1,4 +1,5 @@
 #include <NewPing.h>
+#include <SoftwareSerial.h>
 
 /* Example code for HC-SR04 ultrasonic distance sensor with Arduino. No library required. More info: https://www.makerguides.com */
 #define USONIC_DIV 58.0
@@ -11,6 +12,9 @@ const int echoPin2 = 5;
 
 const int trigPin3 = 6;
 const int echoPin3 = 7;
+
+const int rxPin = 8;
+const int txPin = 9;
 
 
 const int MEASURE_SAMPLES = 10;
@@ -33,6 +37,8 @@ NewPing sensor(trigPin1, echoPin1, 200);
 NewPing sensor2(trigPin2, echoPin2, 200);
 NewPing sensor3(trigPin3, echoPin3, 200);
 
+SoftwareSerial BT_Serial(9, 8);
+
 void setup() {
   // Define inputs and outputs:
   //pinMode(trigPin1, OUTPUT);
@@ -44,15 +50,24 @@ void setup() {
   */
   //Begin Serial communication at a baudrate of 9600:
   Serial.begin(9600);
+  BT_Serial.begin(9600);
 }
 void loop() {
   delay(MEASURE_SAMPLE_DELAY);
+  //BT_Serial.println("Bluetooth man");
   //Serial.println(measure(trigPin1, echoPin1));
+  BT_Serial.print(singleMeasurement2());
+  BT_Serial.print("\t");
+  BT_Serial.print(singleMeasurement(trigPin1, echoPin1));
+  BT_Serial.print("\t");
+  BT_Serial.println(singleMeasurement3());
+  /*
   Serial.print(singleMeasurement2());
   Serial.print("\t");
   Serial.print(singleMeasurement(trigPin1, echoPin1));
   Serial.print("\t");
   Serial.println(singleMeasurement3());
+  */
 }
 
 float measure(int trigPin, int echoPin){
