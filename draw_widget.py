@@ -2,6 +2,8 @@ from random import random
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.graphics import Color, Ellipse, Line
+from kivy.clock import Clock
+from kivy.core.window import Window
 
 import serial
 
@@ -14,11 +16,12 @@ class DrawWidget(Widget):
 
         self.x, self.y = 0, 0
         self.first = True
-        self.startx, self.starty = self.width / 4, self.height / 4
+        #self.startx, self.starty = self.width / 4, self.height / 4
+        self.startx, self.starty = 200, 525
         self.lastx, self.lasty = 0, 0
         self.initx, self.inity = 0, 0
         self.ser = serial.Serial()
-        self.sensitivity = 3
+        self.sensitivity = 5
         self.past_dz = 150
 
         self.x_list = []
@@ -47,9 +50,9 @@ class DrawWidget(Widget):
         return (int(float(pos[0])), int(float(pos[1])), int(float(pos[2])))
 
 
-    def start_draw(self):
+    def start_draw(self, dt):
         print("start")
-        while(self.ser.isOpen()):
+        if(self.ser.isOpen()):
             while(self.ser.inWaiting() > 0):
                 line = self.ser.readline().decode().rstrip()
                 print(line)
@@ -58,7 +61,7 @@ class DrawWidget(Widget):
                 if(disx == 0 or disy == 0 or disz == 0):
                     break
                 corx = disx - self.initx
-                cory = disy - self.inity
+                cory = (disy - self.inity) * (-1)
                 diffx = corx - self.lastx
                 diffy = cory - self.lasty
 
@@ -74,7 +77,10 @@ class DrawWidget(Widget):
                     Color(*self.color)
                     d = 30.
                     Ellipse(pos=(drawx - d / 2, drawy - d / 2), size=(d, d))
+                self.lastx = corx
+                self.lasty = cory
         print("end")
+
 
 
 
@@ -122,7 +128,8 @@ class DrawWidget(Widget):
                     print(self.inity)
                     break
             print("Done Calibrating!")
-            self.start_draw()
+            Clock.schedule_interval(self.start_draw, 1 / 30)
+            #self.start_draw()
 
 
     def on_touch_down(self, touch):
